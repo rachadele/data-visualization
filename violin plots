@@ -1,0 +1,157 @@
+import matplotlib.pyplot as plt
+import matplotlib.patches as mplpatches
+import numpy as np
+import argparse
+from scipy import stats
+import itertools
+
+def permutationtest(yList1,yList2):
+    difference=np.abs(np.mean(yList1)-np.mean(yList2))
+    combinedList=np.concatenate((yList1,yList2),axis=None)
+    bigger=0
+    for iteration in range(0,500,1):
+        np.random.shuffle(combinedList)
+        newList1=combinedList[:len(yList1)]
+        newList2=combinedList[len(yList1):]
+        newDifference=np.abs(np.mean(newList1)-np.mean(newList2))
+        if newDifference>=difference:
+            bigger+=1
+
+    return bigger/(iteration+1)
+
+def readData(inputfile):
+    score_list = []
+    with open(inputfile) as f:
+        for line1,line2 in itertools.zip_longest(*[f]*2):
+            #print(line2)
+            a = line1.split('\t')
+            #print(a)
+            score = float(a[7])
+            if score is not 0:
+                score_list.append(score)           
+    return score_list
+
+def readData_bg2(inputFile):
+    score_list = []
+    for line in open(inputFile):
+        #print(line)
+        a = line.strip().split('\t')
+        #print(a)
+        score = float(a[7])
+        if score is not 0:
+            score_list.append(score) 
+    return score_list
+
+def main():
+    parser=argparse.ArgumentParser()
+    parser.add_argument('-i1')
+    parser.add_argument('-i2')
+    parser.add_argument('-i3')
+    parser.add_argument('-i4')
+    parser.add_argument('-i5')
+    parser.add_argument('-i6')    
+    parser.add_argument('-s','--style_sheet',default='BME163')
+    args=parser.parse_args()
+    inputFile1=args.i1
+    inputFile2=args.i2
+    inputFile3=args.i3
+    inputFile4=args.i4
+    inputFile5=args.i5
+    inputFile6=args.i6    
+    styleSheet=args.style_sheet
+    plt.style.use(styleSheet)
+    
+    fig, axs = plt.subplots(3, sharex=True, sharey=True, figsize=(8,8))
+    fig.suptitle('Distribution of Contact Scores \n in bins with overlapping CTCF motifs', fontsize = 14)
+    fig.Width = 15
+    fig.Height = 15
+
+
+    plt.yscale('log',basey=10) 
+    score_list1 = readData(inputFile1)
+    score_list2 = readData_bg2(inputFile2)
+    score_list3 = readData(inputFile3)
+    score_list4=readData(inputFile4)
+    score_list5 = readData(inputFile5)
+    score_list6 = readData_bg2(inputFile6)
+    
+    panel1 = axs[0] 
+    panel2 =  axs[1]
+    panel3= axs[2]
+    fig.text(0.24, 0.09, 'Variant Present', ha='center')
+    fig.text(0.85,0.09,'Variant Absent', ha = 'right')
+    fig.text(0.03, 0.5, 'Normalized Contact Score', va='center', rotation='vertical')
+
+    vp1=panel1.violinplot([score_list1,score_list2],positions=[2,4],widths=0.5,showmeans = False,
+                          showextrema = False, showmedians = False)
+    
+    vp2=panel2.violinplot([score_list3,score_list4],positions=[2,4],widths=0.5,showmeans = False,
+                          showextrema = False, showmedians = False)
+
+    vp3 = panel3.violinplot([score_list5,score_list6],positions=[2,4],widths=0.5,showmeans = False,
+                            showextrema = False, showmedians = False)
+    
+
+    for plot,i in zip([vp1,vp2,vp3],np.arange(0,3,1)):
+        for body in plot['bodies']:
+            if i==0:
+                body.set(facecolor='fuchsia',
+                         linewidth=1,
+                         alpha=0.5,zorder=2)
+                body.set_edgecolor('black')
+            if i==1:
+                body.set(facecolor='green',
+                         linewidth=1,
+                         alpha=0.5,zorder=2)
+                body.set_edgecolor('black')
+            if i==2:
+                body.set(facecolor='tomato',
+                         linewidth=1,
+                         alpha=0.5,zorder=2)
+                body.set_edgecolor('black')
+            
+
+ #   for plot in [vp1,vp3]:  
+ #       for partname in ('cmeans'):
+ #          plot[partname].set_edgecolor('black')
+ #          plot[partname].set_linewidth(0.7)
+
+    pvalue1=permutationtest(score_list1,score_list2)
+    panel1.text(3,0.015,'p='+str(pvalue1),va='bottom',ha='center')
+    panel1.text(2,0.01,'mean='+"{:.5}".format(np.mean(score_list1),va='bottom',ha='left'))
+    panel1.text(4,0.01,'mean='+"{:.5}".format(np.mean(score_list2),va='bottom',ha='right'))
+    panel1.plot([2,4],[0.01,0.01],linewidth=1,color='black')
+
+    pvalue2=permutationtest(score_list3,score_list4)
+    panel2.text(3,0.01,'p='+str(pvalue2),va='bottom',ha='center')
+    panel2.text(2,0.01,'mean='+"{:.5}".format(np.mean(score_list3),va='bottom',ha='left'))
+    panel2.text(4,0.01,'mean='+"{:.5}".format(np.mean(score_list4),va='bottom',ha='right'))
+    panel2.plot([2,4],[0.01,0.01],linewidth=1,color='black')
+
+
+    pvalue3=permutationtest(score_list5,score_list6)
+    panel3.text(3,0.01,'p='+str(pvalue3),va='bottom',ha='center')
+    panel3.text(2,0.01,'mean='+"{:.5}".format(np.mean(score_list5),va='bottom',ha='left'))
+    panel3.text(4,0.01,'mean='+"{:.5}".format(np.mean(score_list6),va='bottom',ha='right'))
+    panel3.plot([2,4],[0.01,0.01],linewidth=1,color='black')
+
+
+
+    panel1.tick_params(bottom=True, labelbottom=True,
+                            left=False, labelleft=True,
+                            right=False, labelright=False,
+                            top=False, labeltop=False)
+    panel1.set_xlabel('HM092A')
+    panel2.set_xlabel('HG0026')               
+    panel3.set_xlabel('HG002')
+    for ax in axs:
+        ax.set_xticks([])
+
+    
+    plt.savefig('Score_plot.png')
+    
+if __name__ == "__main__":
+    main()
+            
+
+
