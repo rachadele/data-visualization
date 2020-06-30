@@ -1,0 +1,61 @@
+import matplotlib.pyplot as plt
+import matplotlib.patches as mplpatches
+import numpy as np
+import time
+import scipy.stats as stats
+import argparse
+
+parser=argparse.ArgumentParser()
+parser.add_argument('-i','--input_file')
+parser.add_argument('-s','--style_sheet',default='BME163')
+args=parser.parse_args()
+inputFile=args.input_file
+styleSheet=args.style_sheet
+plt.style.use(styleSheet)
+
+mainpanelWidth=1.5
+mainpanelHeight=2
+figureWidth=3
+figureHeight=3
+
+relativeMainPanelWidth=mainpanelWidth/figureWidth
+relativeMainPanelHeight=mainpanelHeight/figureHeight
+
+mainPanel=plt.axes([0.1,0.2,relativeMainPanelWidth,relativeMainPanelHeight])
+
+blue=(0,0,1)
+red=(1,0,0)
+green=(0,1,0)
+yellow=(1,1,0)
+black=(0,0,0)
+white=(1,1,1)
+
+for a in open(inputFile):
+    line= a.strip().split('\t')
+    if line[1] != 'NA' and line[2] != 'NA':
+        fold_change = float(line[1])
+        pvalue = -(np.log10(float(line[2])))
+        ID = line[0]
+        if 2**abs(fold_change) > 10 and pvalue > 8:
+            mainPanel.scatter(fold_change, pvalue,s=4, c=(1,0,0), 
+            linewidth=0)
+        else:
+            mainPanel.scatter(fold_change, pvalue, s=4, c=(0,0,0),
+            linewidth=0)
+        if 2**-(fold_change) > 10 and pvalue > 30:
+            mainPanel.text(fold_change, pvalue, ID, horizontalalignment='right',fontsize=8)
+
+mainPanel.set_xlim(-12,12)
+mainPanel.set_ylim(0,60)
+mainPanel.set_xlabel('log$_{2}$(fold change)')
+mainPanel.set_ylabel('-log$_{10}$(p-value)')
+
+mainPanel.set_yticks([0,20,40,60])
+
+        
+plt.savefig('Assignment3.pdf',dpi=600)        
+                        
+                        
+
+
+
